@@ -9,7 +9,7 @@
 
 <body onload="init();">
     <h1>Heizungsanlage Monitor (V1.0)</h1>
-    <canvas id="canv1" width="640" height="320" style="border:1px solid #853b3b; background-color:#ccdbdd">
+    <canvas id="canv1" width="640" height="320" style="border:1px solid #68471d; background-color:#ccdbdd">
     </canvas>
 
     <script type="text/javascript">
@@ -20,24 +20,28 @@
         var temp_puffer3 = "--";
 
         var kamin_x = 40;
-        var kamin_y = 160;
+        var kamin_y = 180;
         var kamin_w = 60;
         var kamin_h = 100;
-        var puffer_x = 200;
+        var puffer_x = 240;
         var puffer_y = 120;
         var puffer_w = 80;
         var puffer_h = 160;
-        var brenner_x = 400;
-        var brenner_y = 160;
-        var brenner_w = 60;
+        var brenner_x = 440;
+        var brenner_y = 180;
+        var brenner_w = 80;
         var brenner_h = 100;
+        var line_offset = 0;
 
         function draw() {
             var canvas = document.getElementById('canv1');
             if (canvas.getContext) {
                 var ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else {
+                return;
+            }
 
+            function draw_text() {
                 ctx.font = "24px Arial";
                 ctx.fillStyle = "#000000";
                 ctx.fillText("Kamin", kamin_x, kamin_y - 5);
@@ -45,42 +49,84 @@
                 ctx.fillText("Brenner", brenner_x, brenner_y - 5);
 
                 ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
-                ctx.fillText(temp_puffer1, puffer_x - 20, puffer_y + 20);
-                ctx.fillText(temp_puffer2, puffer_x - 20, puffer_y + 90);
-                ctx.fillText(temp_puffer3, puffer_x - 20, puffer_y + 160);
+                ctx.fillText(temp_puffer1, puffer_x - 28, puffer_y + 20);
+                ctx.fillText(temp_puffer2, puffer_x - 28, puffer_y + 70);
+                ctx.fillText(temp_puffer3, puffer_x - 28, puffer_y + 130);
+            }
 
+            function draw_kamin() {
                 // Kamin
-                ctx.strokeStyle = "#775500";
-                ctx.strokeRect(kamin_x, kamin_y, kamin_w, kamin_h);
+                ctx.fillStyle = "#68471d";
+                ctx.fillRect(kamin_x, kamin_y, kamin_w, kamin_h);
+                ctx.clearRect(kamin_x + 10, kamin_y + 25, kamin_w - 20, kamin_h - 60);
+            }
 
-                // Brenner
-                ctx.strokeRect(brenner_x, brenner_y, brenner_w, brenner_h);
-
+            function draw_puffer() {
                 // Puffer mit Temperaturanimation
                 // Create gradient
-                var grd = ctx.createLinearGradient(0, 0, 0, 160);
+                var grd = ctx.createLinearGradient(0, puffer_y, 0, puffer_y+puffer_h);
                 grd.addColorStop(0, "#ff0000");
-                grd.addColorStop(0.8, "#aa0066");
+                grd.addColorStop(0.7, "#880088");
                 grd.addColorStop(1, "#0000ff");
                 // Fill with gradient
                 ctx.fillStyle = grd;
                 ctx.fillRect(puffer_x, puffer_y, puffer_w, puffer_h);
+            }
 
+            function draw_kessel() {
+                // Öl-Brenner
+                ctx.fillStyle = "#aa0000";
+                ctx.beginPath();
+                ctx.moveTo(brenner_x, brenner_y);
+                ctx.lineTo(brenner_x + brenner_w - 30, brenner_y);
+                ctx.lineTo(brenner_x + brenner_w, brenner_y + 30);
+                ctx.lineTo(brenner_x + brenner_w, brenner_y + brenner_h);
+                ctx.lineTo(brenner_x,             brenner_y + brenner_h);
+                ctx.closePath();
+                ctx.fill();
+                //ctx.fillRect(brenner_x, brenner_y, brenner_w, brenner_h);
+            }
+
+            function draw_leitung_kamin() {
                 // Leitung Kamin - Puffer
                 ctx.strokeStyle = "#ff0000";
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 6;
                 ctx.lineJoin = "round";
+                ctx.lineDashOffset = -line_offset;
+                ctx.setLineDash([15,5]);
                 ctx.beginPath();
-                ctx.moveTo(100, 180);
-                ctx.lineTo(200, 180);
+                ctx.moveTo(kamin_x + kamin_w, kamin_y + 20);
+                ctx.lineTo(puffer_x,          kamin_y + 20);
                 ctx.stroke();
+                // ctx.strokeStyle = "#000000";
+                // ctx.lineWidth = 1;
+                // ctx.strokeRect(kamin_x + kamin_w, kamin_y + 20 - 2, puffer_x - kamin_x - kamin_w, 4);
 
                 ctx.strokeStyle = "#0000ff";
+                ctx.lineDashOffset = line_offset;
                 ctx.beginPath();
-                ctx.moveTo(100, 240);
-                ctx.lineTo(200, 240);
+                ctx.moveTo(kamin_x + kamin_w,  kamin_y + kamin_h -20 );
+                ctx.lineTo(puffer_x,           kamin_y + kamin_h - 20);
                 ctx.stroke();
+
             }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            draw_kamin();
+            draw_puffer();
+            draw_kessel();
+            draw_leitung_kamin();
+            draw_text();
+
+            if (temp_kamin > 55)
+            {
+                if (++line_offset > 19) line_offset = 0;
+            }
+            else {
+                line_offset = 0;
+            }
+            setTimeout(draw, 80);  // redraw for animation every 100 ms
         }
 
         function refresh() {
@@ -89,8 +135,14 @@
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200) {
                     document.getElementById('temperatur1').innerText = req.responseText;
-                    temp_kamin = req.responseText;
-                    draw();
+                    //temp_kamin = req.responseText;
+                    var arr = req.responseText.split(",");
+                    if (arr.length >= 4) {
+                        temp_kamin   = arr[0];
+                        temp_puffer1 = arr[1];
+                        temp_puffer2 = arr[2];
+                        temp_puffer3 = arr[3];
+                    }
                 }
             }
             req.open("GET", 'reload.txt', true); // Grabs whatever you've written in this file
