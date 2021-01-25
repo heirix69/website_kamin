@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="en-us" http-equiv="Content-Language" />
+    <title>Heizungsanlage Monitor</title>
+</head>
+
+<body onload="init();">
+    <h1>Heizungsanlage Monitor (V1.0)</h1>
+    <canvas id="canv1" width="640" height="320" style="border:1px solid #853b3b; background-color:#ccdbdd">
+    </canvas>
+
+    <script type="text/javascript">
+
+        var temp_kamin = "--";
+        var temp_puffer1 = "--";
+        var temp_puffer2 = "--";
+        var temp_puffer3 = "--";
+
+        var kamin_x = 40;
+        var kamin_y = 160;
+        var kamin_w = 60;
+        var kamin_h = 100;
+        var puffer_x = 200;
+        var puffer_y = 120;
+        var puffer_w = 80;
+        var puffer_h = 160;
+        var brenner_x = 400;
+        var brenner_y = 160;
+        var brenner_w = 60;
+        var brenner_h = 100;
+
+        function draw() {
+            var canvas = document.getElementById('canv1');
+            if (canvas.getContext) {
+                var ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.font = "24px Arial";
+                ctx.fillStyle = "#000000";
+                ctx.fillText("Kamin", kamin_x, kamin_y - 5);
+                ctx.fillText("Puffer", puffer_x, puffer_y - 5);
+                ctx.fillText("Brenner", brenner_x, brenner_y - 5);
+
+                ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
+                ctx.fillText(temp_puffer1, puffer_x - 20, puffer_y + 20);
+                ctx.fillText(temp_puffer2, puffer_x - 20, puffer_y + 90);
+                ctx.fillText(temp_puffer3, puffer_x - 20, puffer_y + 160);
+
+                // Kamin
+                ctx.strokeStyle = "#775500";
+                ctx.strokeRect(kamin_x, kamin_y, kamin_w, kamin_h);
+
+                // Brenner
+                ctx.strokeRect(brenner_x, brenner_y, brenner_w, brenner_h);
+
+                // Puffer mit Temperaturanimation
+                // Create gradient
+                var grd = ctx.createLinearGradient(0, 0, 0, 160);
+                grd.addColorStop(0, "#ff0000");
+                grd.addColorStop(0.8, "#aa0066");
+                grd.addColorStop(1, "#0000ff");
+                // Fill with gradient
+                ctx.fillStyle = grd;
+                ctx.fillRect(puffer_x, puffer_y, puffer_w, puffer_h);
+
+                // Leitung Kamin - Puffer
+                ctx.strokeStyle = "#ff0000";
+                ctx.lineWidth = 4;
+                ctx.lineJoin = "round";
+                ctx.beginPath();
+                ctx.moveTo(100, 180);
+                ctx.lineTo(200, 180);
+                ctx.stroke();
+
+                ctx.strokeStyle = "#0000ff";
+                ctx.beginPath();
+                ctx.moveTo(100, 240);
+                ctx.lineTo(200, 240);
+                ctx.stroke();
+            }
+        }
+
+        function refresh() {
+            var req = new XMLHttpRequest();
+            console.log("Grabbing Value");
+            req.onreadystatechange = function() {
+                if (req.readyState == 4 && req.status == 200) {
+                    document.getElementById('temperatur1').innerText = req.responseText;
+                    temp_kamin = req.responseText;
+                    draw();
+                }
+            }
+            req.open("GET", 'reload.txt', true); // Grabs whatever you've written in this file
+            req.send(null);
+        }
+
+        function init() // function the browser first runs when it's loaded.
+        {
+            draw();
+            refresh();   // Run the refresh function for the first time.
+            setInterval(refresh, 10000);  // Set interval to run it every 10 seconds.
+        }
+    </script>
+
+    <div id="main">
+        <div id="updateMe">
+            <h2>Temperatur:</h2>
+            <h1 id="temperatur1"></h1>
+        </div>
+    </div>
+</body>
+
+</html>
