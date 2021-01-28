@@ -14,23 +14,30 @@
 
     <script type="text/javascript">
 
-        var temp_kamin = "--";
-        var temp_puffer1 = "--";
-        var temp_puffer2 = "--";
-        var temp_puffer3 = "--";
+        // Temperatures
+        var temp_kamin   = 0; //"--";
+        var temp_puffer1 = 0; //"--";
+        var temp_puffer2 = 0; //"--";
+        var temp_puffer3 = 0; //"--";
 
-        var kamin_x = 40;
-        var kamin_y = 180;
-        var kamin_w = 60;
-        var kamin_h = 100;
-        var puffer_x = 240;
-        var puffer_y = 120;
-        var puffer_w = 80;
-        var puffer_h = 160;
-        var brenner_x = 440;
-        var brenner_y = 180;
-        var brenner_w = 80;
-        var brenner_h = 100;
+        // Positions
+        const kamin_x = 40;
+        const kamin_y = 180;
+        const kamin_w = 60;
+        const kamin_h = 100;
+        const puffer_x = 240;
+        const puffer_y = 120;
+        const puffer_w = 80;
+        const puffer_h = 160;
+        const brenner_x = 460;
+        const brenner_y = 180;
+        const brenner_w = 80;
+        const brenner_h = 100;
+        const heizung_x = 460;
+        const heizung_y = 40;
+        const heizung_w = 80;
+        const heizung_h = 50;
+
         var line_offset = 0;
 
         function draw() {
@@ -61,13 +68,27 @@
                 ctx.clearRect(kamin_x + 10, kamin_y + 25, kamin_w - 20, kamin_h - 60);
             }
 
+            // calculate a color value between red and blue according to the temperature parameter
+            function calc_tcolor( temp ) {
+                var tmax = 80; // everything above tmax is 100% red, 0% blue
+                var tmin = 20; // everything below tmin is 0% red, 100% blue
+                var red = (temp - tmin) * 256 / (tmax - tmin);
+                if (red >= 256) red = 255;
+                var blue = 255 - red;
+                var color = "rgb(" + red + ",0," + blue + ", 255)";
+                return color;
+            }
+
             function draw_puffer() {
                 // Puffer mit Temperaturanimation
                 // Create gradient
                 var grd = ctx.createLinearGradient(0, puffer_y, 0, puffer_y+puffer_h);
-                grd.addColorStop(0, "#ff0000");
-                grd.addColorStop(0.7, "#880088");
-                grd.addColorStop(1, "#0000ff");
+                var color1 = calc_tcolor(temp_puffer1);
+                var color2 = calc_tcolor(temp_puffer2);
+                var color3 = calc_tcolor(temp_puffer3);
+                grd.addColorStop(0, color1);
+                grd.addColorStop(0.5, color2);
+                grd.addColorStop(1, color3);
                 // Fill with gradient
                 ctx.fillStyle = grd;
                 ctx.fillRect(puffer_x, puffer_y, puffer_w, puffer_h);
@@ -84,23 +105,41 @@
                 ctx.lineTo(brenner_x,             brenner_y + brenner_h);
                 ctx.closePath();
                 ctx.fill();
-                //ctx.fillRect(brenner_x, brenner_y, brenner_w, brenner_h);
             }
 
-            function draw_leitung_kamin() {
+            function draw_heizung() {
+                // Heizung
+                ctx.strokeStyle = "#eeeeee";
+                ctx.lineCap = "round";
+                ctx.lineWidth = 20;
+                ctx.lineDashOffset = 0;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(heizung_x, heizung_y);
+                ctx.lineTo(heizung_x, heizung_y + heizung_h);
+                ctx.moveTo(heizung_x+22, heizung_y);
+                ctx.lineTo(heizung_x+22, heizung_y + heizung_h);
+                ctx.moveTo(heizung_x+44, heizung_y);
+                ctx.lineTo(heizung_x+44, heizung_y + heizung_h);
+                ctx.moveTo(heizung_x+66, heizung_y);
+                ctx.lineTo(heizung_x+66, heizung_y + heizung_h);
+                ctx.stroke();
+            }
+
+            function leitung_kamin_puffer() {
                 // Leitung Kamin - Puffer
                 ctx.strokeStyle = "#ff0000";
+                ctx.lineCap = "butt";
                 ctx.lineWidth = 6;
                 ctx.lineJoin = "round";
                 ctx.lineDashOffset = -line_offset;
                 ctx.setLineDash([15,5]);
                 ctx.beginPath();
                 ctx.moveTo(kamin_x + kamin_w, kamin_y + 20);
-                ctx.lineTo(puffer_x,          kamin_y + 20);
+                ctx.lineTo(puffer_x - 50,     kamin_y + 20);
+                ctx.lineTo(puffer_x - 50,     puffer_y + 25);
+                ctx.lineTo(puffer_x,          puffer_y + 25);
                 ctx.stroke();
-                // ctx.strokeStyle = "#000000";
-                // ctx.lineWidth = 1;
-                // ctx.strokeRect(kamin_x + kamin_w, kamin_y + 20 - 2, puffer_x - kamin_x - kamin_w, 4);
 
                 ctx.strokeStyle = "#0000ff";
                 ctx.lineDashOffset = line_offset;
@@ -108,15 +147,42 @@
                 ctx.moveTo(kamin_x + kamin_w,  kamin_y + kamin_h -20 );
                 ctx.lineTo(puffer_x,           kamin_y + kamin_h - 20);
                 ctx.stroke();
+            }
 
+            function leitung_kessel_heizung() {
+                // Leitung Kessel - Heizung
+                ctx.strokeStyle = "#ff0000";
+                ctx.lineCap = "butt";
+                ctx.lineWidth = 6;
+                ctx.lineJoin = "round";
+                ctx.lineDashOffset = -line_offset;
+                ctx.setLineDash([15,5]);
+                ctx.beginPath();
+                ctx.moveTo(brenner_x,         brenner_y + 20);
+                ctx.lineTo(brenner_x - 50,    brenner_y + 20);
+                ctx.lineTo(brenner_x - 50,    heizung_y + 10);
+                ctx.lineTo(heizung_x,         heizung_y + 10);
+                ctx.stroke();
+
+                ctx.strokeStyle = "#0000ff";
+                ctx.lineDashOffset = line_offset;
+                ctx.beginPath();
+                ctx.moveTo(brenner_x,         brenner_y + 80);
+                ctx.lineTo(brenner_x - 70,    brenner_y + 80);
+                ctx.lineTo(brenner_x - 70,    heizung_y + heizung_h + 25);
+                ctx.lineTo(heizung_x + heizung_w - 15, heizung_y + heizung_h + 25);
+                ctx.lineTo(heizung_x + heizung_w - 15, heizung_y + heizung_h);
+                ctx.stroke();
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            leitung_kamin_puffer();
+            leitung_kessel_heizung();
             draw_kamin();
             draw_puffer();
             draw_kessel();
-            draw_leitung_kamin();
+            draw_heizung();
             draw_text();
 
             if (temp_kamin > 55)
@@ -138,10 +204,10 @@
                     //temp_kamin = req.responseText;
                     var arr = req.responseText.split(",");
                     if (arr.length >= 4) {
-                        temp_kamin   = arr[0];
-                        temp_puffer1 = arr[1];
-                        temp_puffer2 = arr[2];
-                        temp_puffer3 = arr[3];
+                        temp_kamin   = parseInt(arr[0], 10);
+                        temp_puffer1 = parseInt(arr[1], 10);
+                        temp_puffer2 = parseInt(arr[2], 10);
+                        temp_puffer3 = parseInt(arr[3], 10);
                     }
                 }
             }
@@ -153,13 +219,13 @@
         {
             draw();
             refresh();   // Run the refresh function for the first time.
-            setInterval(refresh, 10000);  // Set interval to run it every 10 seconds.
+            setInterval(refresh, 10000);  // interval to reload values in ms.
         }
     </script>
 
     <div id="main">
         <div id="updateMe">
-            <h2>Temperatur:</h2>
+            <h2>reload.txt:</h2>
             <h1 id="temperatur1"></h1>
         </div>
     </div>
