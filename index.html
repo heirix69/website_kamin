@@ -9,8 +9,8 @@
 </head>
 
 <body onload="init();">
-    <h1>Heizungsanlage Monitor (V1.0)</h1>
-    <canvas id="canv1" width="640" height="320" style="border:1px solid #68471d; background-color:#ccdbdd">
+    <h1>Heizungsanlage Monitor</h1>
+    <canvas id="canv1" width="640" height="400" style="border:1px solid #68471d; background-color:#ccdbdd">
     </canvas>
 
     <script type="text/javascript">
@@ -20,18 +20,20 @@
         var temp_puffer1 = 0; //"--";
         var temp_puffer2 = 0; //"--";
         var temp_puffer3 = 0; //"--";
+        var temp_heiz_vl = 0; //"--";
+        var temp_heiz_rl = 0; //"--";
 
         // Positions
         const kamin_x = 40;
-        const kamin_y = 180;
+        const kamin_y = 240;
         const kamin_w = 60;
         const kamin_h = 100;
         const puffer_x = 240;
-        const puffer_y = 120;
+        const puffer_y = 160;
         const puffer_w = 80;
-        const puffer_h = 160;
+        const puffer_h = 180;
         const brenner_x = 460;
-        const brenner_y = 180;
+        const brenner_y = 200;
         const brenner_w = 80;
         const brenner_h = 100;
         const heizung_x = 460;
@@ -39,7 +41,14 @@
         const heizung_w = 80;
         const heizung_h = 50;
 
-        var line_offset = 0;
+        // Schwellwerte
+        const tmin_kamin = 55;
+        const dt_kamin_puffer = 6;
+
+        // line offset for dashed lines flow animation
+        var lo_kamin = 0;
+        var lo_heizkreis = 0;
+        var lo_rla_heizkreis = 0;
 
         function draw() {
             var canvas = document.getElementById('canv1');
@@ -50,16 +59,18 @@
             }
 
             function draw_text() {
-                ctx.font = "24px Arial";
+                ctx.font = "22px Arial";
                 ctx.fillStyle = "#000000";
                 ctx.fillText("Kamin", kamin_x, kamin_y - 5);
                 ctx.fillText("Puffer", puffer_x, puffer_y - 5);
                 ctx.fillText("Brenner", brenner_x, brenner_y - 5);
 
                 ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
-                ctx.fillText(temp_puffer1, puffer_x - 28, puffer_y + 20);
-                ctx.fillText(temp_puffer2, puffer_x - 28, puffer_y + 70);
-                ctx.fillText(temp_puffer3, puffer_x - 28, puffer_y + 130);
+                ctx.fillText(temp_puffer1, puffer_x - 30, puffer_y + 15);
+                ctx.fillText(temp_puffer2, puffer_x - 30, puffer_y + 70);
+                ctx.fillText(temp_puffer3, puffer_x - 30, puffer_y + 150);
+                ctx.fillText(temp_heiz_vl, brenner_x - 30, brenner_y + 10);
+                ctx.fillText(temp_heiz_rl, brenner_x - 30, brenner_y + brenner_h + 50);
             }
 
             function draw_kamin() {
@@ -129,11 +140,21 @@
 
             function leitung_kamin_puffer() {
                 // Leitung Kamin - Puffer
-                ctx.strokeStyle = "#ff0000";
+                var dt = temp_kamin - temp_puffer3;
+                if (temp_kamin > tmin_kamin && dt >= dt_kamin_puffer)
+                {
+                    if (++lo_kamin > 19) lo_kamin = 0;
+                }
+                else {
+                    lo_kamin = 0;
+                }
+
+                var color = calc_tcolor(temp_kamin);
+                ctx.strokeStyle = color; //"#ff0000";
                 ctx.lineCap = "butt";
                 ctx.lineWidth = 6;
                 ctx.lineJoin = "round";
-                ctx.lineDashOffset = -line_offset;
+                ctx.lineDashOffset = -lo_kamin;
                 ctx.setLineDash([15,5]);
                 ctx.beginPath();
                 ctx.moveTo(kamin_x + kamin_w, kamin_y + 20);
@@ -142,21 +163,30 @@
                 ctx.lineTo(puffer_x,          puffer_y + 25);
                 ctx.stroke();
 
-                ctx.strokeStyle = "#0000ff";
-                ctx.lineDashOffset = line_offset;
+                // ctx.beginPath();
+                // ctx.moveTo(kamin_x + kamin_w + 30, kamin_y + 20);
+                // ctx.lineTo(kamin_x + kamin_w + 30, kamin_y + kamin_h - 20);
+                // ctx.stroke();
+
+                color = calc_tcolor(temp_puffer3);
+                ctx.strokeStyle = color; //"#0000ff";
+                ctx.lineDashOffset = lo_kamin;
                 ctx.beginPath();
-                ctx.moveTo(kamin_x + kamin_w,  kamin_y + kamin_h -20 );
-                ctx.lineTo(puffer_x,           kamin_y + kamin_h - 20);
+                ctx.moveTo(kamin_x + kamin_w, kamin_y + kamin_h - 20);
+                ctx.lineTo(puffer_x,          kamin_y + kamin_h - 20);
                 ctx.stroke();
             }
 
             function leitung_kessel_heizung() {
                 // Leitung Kessel - Heizung
-                ctx.strokeStyle = "#ff0000";
+                if (++lo_heizkreis > 19) lo_heizkreis = 0;
+                var rla_aktiv = (temp_puffer2 - temp_heiz_rl) > 0;
+                var color = calc_tcolor(temp_heiz_vl);
+                ctx.strokeStyle = color; //"#ff0000";
                 ctx.lineCap = "butt";
                 ctx.lineWidth = 6;
                 ctx.lineJoin = "round";
-                ctx.lineDashOffset = -line_offset;
+                ctx.lineDashOffset = -lo_heizkreis;
                 ctx.setLineDash([15,5]);
                 ctx.beginPath();
                 ctx.moveTo(brenner_x,         brenner_y + 20);
@@ -165,14 +195,77 @@
                 ctx.lineTo(heizung_x,         heizung_y + 10);
                 ctx.stroke();
 
-                ctx.strokeStyle = "#0000ff";
-                ctx.lineDashOffset = line_offset;
+                color = calc_tcolor(temp_heiz_rl);
+                ctx.strokeStyle = color; //"#0000ff";
+                ctx.lineDashOffset = -lo_heizkreis;
                 ctx.beginPath();
-                ctx.moveTo(brenner_x,         brenner_y + 80);
-                ctx.lineTo(brenner_x - 70,    brenner_y + 80);
-                ctx.lineTo(brenner_x - 70,    heizung_y + heizung_h + 25);
-                ctx.lineTo(heizung_x + heizung_w - 15, heizung_y + heizung_h + 25);
-                ctx.lineTo(heizung_x + heizung_w - 15, heizung_y + heizung_h);
+                ctx.moveTo(heizung_x + heizung_w - 15, heizung_y + heizung_h - 5);
+                ctx.lineTo(brenner_x + brenner_w + 40, heizung_y + heizung_h - 5);
+                ctx.lineTo(brenner_x + brenner_w + 40, brenner_y + brenner_h + 20);
+                ctx.lineTo(brenner_x - 50,    brenner_y + brenner_h + 20);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(brenner_x - 50,    brenner_y + brenner_h + 20);
+                if (rla_aktiv == true) {
+                    ctx.lineDashOffset = 0;
+                    ctx.lineTo(brenner_x - 50,    brenner_y + brenner_h - 20);
+                }
+                else {
+                    ctx.lineTo(brenner_x - 50,    brenner_y + brenner_h - 20);
+                    ctx.lineTo(brenner_x,         brenner_y + brenner_h - 20);
+                }
+                ctx.stroke();
+            }
+
+            function leitung_rla_heizung() {
+                // Leitung Rücklaufanhebung Heizungsrücklauf
+                var rla_aktiv = (temp_puffer2 - temp_heiz_rl) > 0;
+                if (rla_aktiv == true) {
+                    if (++lo_rla_heizkreis > 19) lo_rla_heizkreis = 0;
+                }
+                else {
+                    lo_rla_heizkreis = 0;
+                }
+
+                var color = calc_tcolor(temp_puffer2);
+                ctx.strokeStyle = color;
+                ctx.lineCap = "butt";
+                ctx.lineWidth = 6;
+                ctx.lineJoin = "round";
+                ctx.lineDashOffset = -lo_rla_heizkreis;
+                ctx.setLineDash([15,5]);
+                ctx.beginPath();
+                ctx.moveTo(puffer_x + puffer_w,       puffer_y + 50);
+                ctx.lineTo(puffer_x + puffer_w + 30,  puffer_y + 50);
+                ctx.lineTo(puffer_x + puffer_w + 30,  brenner_y + brenner_h - 20);
+                ctx.lineTo(brenner_x - 50,            brenner_y + brenner_h - 20);
+                if (rla_aktiv == true) {
+                    ctx.lineTo(brenner_x, brenner_y + brenner_h - 20);
+                }
+                ctx.stroke();
+
+                color = calc_tcolor(temp_heiz_rl);
+                ctx.strokeStyle = color; //"#0000ff";
+                ctx.lineDashOffset = lo_rla_heizkreis;
+                ctx.beginPath();
+                ctx.moveTo(puffer_x + puffer_w,       brenner_y + brenner_h + 20);
+                ctx.lineTo(brenner_x - 50,            brenner_y + brenner_h + 20);
+                ctx.stroke();
+            }
+
+            // Puffer aufheizen durch Kessel für Warmwasser
+            function leitung_kessel_ww() {
+                var color = calc_tcolor(temp_heiz_vl);
+                ctx.strokeStyle = color; //"#ff0000";
+                ctx.lineCap = "butt";
+                ctx.lineWidth = 6;
+                ctx.lineJoin = "round";
+                ctx.lineDashOffset = 0; //-lo_kamin;
+                ctx.setLineDash([15,5]);
+                ctx.beginPath();
+                ctx.moveTo(brenner_x - 50,      puffer_y + 20);
+                ctx.lineTo(puffer_x + puffer_w, puffer_y + 20);
                 ctx.stroke();
             }
 
@@ -180,19 +273,14 @@
 
             leitung_kamin_puffer();
             leitung_kessel_heizung();
+            leitung_rla_heizung();
+            leitung_kessel_ww();
             draw_kamin();
             draw_puffer();
             draw_kessel();
             draw_heizung();
             draw_text();
 
-            if (temp_kamin > 55)
-            {
-                if (++line_offset > 19) line_offset = 0;
-            }
-            else {
-                line_offset = 0;
-            }
             setTimeout(draw, 80);  // redraw for animation every 100 ms
         }
 
@@ -204,11 +292,13 @@
                     document.getElementById('temperatur1').innerText = req.responseText;
                     //temp_kamin = req.responseText;
                     var arr = req.responseText.split(",");
-                    if (arr.length >= 4) {
+                    if (arr.length >= 6) {
                         temp_kamin   = parseInt(arr[0], 10);
                         temp_puffer1 = parseInt(arr[1], 10);
                         temp_puffer2 = parseInt(arr[2], 10);
                         temp_puffer3 = parseInt(arr[3], 10);
+                        temp_heiz_vl = parseInt(arr[4], 10);
+                        temp_heiz_rl = parseInt(arr[5], 10);
                     }
                 }
             }
