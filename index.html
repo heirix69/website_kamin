@@ -6,6 +6,22 @@
     <meta content="en-us" http-equiv="Content-Language" />
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <title>Heizungsanlage Monitor</title>
+    <style>
+        h1 {
+            color: rgb(36, 11, 146);
+        }
+        table,
+        th,
+        td {
+            border: 1px solid;
+            border-collapse: separate;
+            margin-top: 2em;
+            text-align: center;
+        }
+        td {
+            padding: .5em;
+        }
+    </style>
 </head>
 
 <body onload="init();">
@@ -61,9 +77,9 @@
             function draw_text() {
                 ctx.font = "22px Arial";
                 ctx.fillStyle = "#000000";
-                // ctx.fillText("Kamin", kamin_x, kamin_y - 5);
-                // ctx.fillText("Puffer", puffer_x, puffer_y - 5);
-                // ctx.fillText("Brenner", brenner_x, brenner_y - 5);
+                ctx.fillText("Kamin", kamin_x, kamin_y - 5);
+                ctx.fillText("Puffer", puffer_x + 10, puffer_y - 5);
+                ctx.fillText("Brenner", brenner_x, brenner_y - 5);
 
                 ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
                 ctx.fillText(temp_puffer1, puffer_x - 30, puffer_y + 15);
@@ -340,6 +356,13 @@
                         temp_puffer3 = parseInt(arr[3], 10);
                         temp_heiz_vl = parseInt(arr[4], 10);
                         temp_heiz_rl = parseInt(arr[5], 10);
+
+                        document.getElementById('t_kamin').innerText = temp_kamin;
+                        document.getElementById('t_puffer1').innerText = temp_puffer1;
+                        document.getElementById('t_puffer2').innerText = temp_puffer2;
+                        document.getElementById('t_puffer3').innerText = temp_puffer3;
+                        document.getElementById('t_heiz_vl').innerText = temp_heiz_vl;
+                        document.getElementById('t_heiz_rl').innerText = temp_heiz_rl;
                     }
                 }
             }
@@ -356,6 +379,20 @@
     </script>
 
     <div id="main">
+        <h2>Messwerte der Sensoren:</h2>
+        <table style="border:1px solid #68471d; background-color:#ccdbdd">
+            <thead>
+                <tr><th>Beschreibung</th><th>Messung</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Temperatur Kaminofen</td><td id="t_kamin"></td></tr>
+                <tr><td>Temperatur Puffer Oben</td><td id="t_puffer1"></td></tr>
+                <tr><td>Temperatur Puffer Mitte</td><td id="t_puffer2"></td></tr>
+                <tr><td>Temperatur Puffer Unten</td><td id="t_puffer3"></td></tr>
+                <tr><td>Temperatur Heizkreis Vorlauf</td><td id="t_heiz_vl"></td></tr>
+                <tr><td>Temperatur Heizkreis Rücklauf</td><td id="t_heiz_rl"></td></tr>
+            </tbody>
+        </table>
         <div id="updateMe">
             <h2>reload.txt:</h2>
             <h1 id="temperatur1"></h1>
