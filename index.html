@@ -32,12 +32,22 @@
     <script type="text/javascript">
 
         // Temperatures
-        var temp_kamin   = 0; //"--";
-        var temp_puffer1 = 0; //"--";
-        var temp_puffer2 = 0; //"--";
-        var temp_puffer3 = 0; //"--";
-        var temp_heiz_vl = 0; //"--";
-        var temp_heiz_rl = 0; //"--";
+        var temp_kamin      = 0; //"--";
+        var temp_kollektor  = 0; //"--";
+        var temp_puffer1    = 0; //"--";
+        var temp_puffer2    = 0; //"--";
+        var temp_puffer3    = 0; //"--";
+        var temp_puffer4    = 0; //"--";
+        var temp_heiz_vl    = 0; //"--";
+        var temp_heiz_rl    = 0; //"--";
+
+        // Pumpenstatus
+        var pumpe_kamin = 0;        // Laddomat
+        var pumpe_solar = 0;        // 
+        var pumpe_heiz_ww = 0;
+
+        // Status Rücklaufanhebung Heizung
+        var rla_aktiv = 0;   // 1 = aktiv / 0 = inaktiv
 
         // Positions
         const kamin_x = 40;
@@ -58,13 +68,13 @@
         const heizung_h = 50;
 
         // Schwellwerte
-        const tmin_kamin = 55;
-        const dt_kamin_puffer = 6;
+        const tmin_kamin = 63;      // Schwellwert, bis dahin Rücklaufanhebung im Kaminofen aktiv ist
 
         // line offset for dashed lines flow animation
         var lo_kamin = 0;
         var lo_heizkreis = 0;
         var lo_rla_heizkreis = 0;
+        var lo_nachheiz_ww = 0;
 
         function draw() {
             var canvas = document.getElementById('canv1');
@@ -75,7 +85,7 @@
             }
 
             function draw_text() {
-                ctx.font = "22px Arial";
+                ctx.font = "20px Arial";
                 ctx.fillStyle = "#000000";
                 ctx.fillText("Kamin", kamin_x, kamin_y - 5);
                 ctx.fillText("Puffer", puffer_x + 10, puffer_y - 5);
@@ -84,9 +94,10 @@
                 ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
                 ctx.fillText(temp_puffer1, puffer_x - 30, puffer_y + 15);
                 ctx.fillText(temp_puffer2, puffer_x - 30, puffer_y + 70);
-                ctx.fillText(temp_puffer3, puffer_x - 30, puffer_y + 150);
+                ctx.fillText(temp_puffer3, puffer_x - 30, puffer_y + 130);
+                ctx.fillText(temp_puffer4, puffer_x - 30, puffer_y + 185);
                 ctx.fillText(temp_heiz_vl, brenner_x - 30, brenner_y + 10);
-                ctx.fillText(temp_heiz_rl, brenner_x - 30, brenner_y + brenner_h + 50);
+                ctx.fillText(temp_heiz_rl, brenner_x - 30, brenner_y + brenner_h + 45);
             }
 
             function draw_kamin() {
@@ -113,10 +124,10 @@
                 var grd = ctx.createLinearGradient(0, puffer_y, 0, puffer_y+puffer_h);
                 var color1 = calc_tcolor(temp_puffer1);
                 var color2 = calc_tcolor(temp_puffer2);
-                var color3 = calc_tcolor(temp_puffer3);
+                var color4 = calc_tcolor(temp_puffer4);
                 grd.addColorStop(0, color1);
                 grd.addColorStop(0.5, color2);
-                grd.addColorStop(1, color3);
+                grd.addColorStop(1, color4);
                 // Fill with gradient
                 ctx.fillStyle = grd;
                 ctx.fillRect(puffer_x, puffer_y, puffer_w, puffer_h);
@@ -154,7 +165,7 @@
                 ctx.stroke();
             }
 
-            function draw_pumpe( x, y) {
+            function draw_pumpe( x, y ) {
                 var r = 11;
                 ctx.strokeStyle = "#000000";
                 ctx.lineWidth = 1;
@@ -168,7 +179,7 @@
                 ctx.stroke();
             }
 
-            function draw_3wege_ventil( x, y) {
+            function draw_3wege_ventil( x, y ) {
                 var r = 5; var a = 12; var h = 8;
                 ctx.strokeStyle = "#000000";
                 ctx.lineWidth = 1;
@@ -190,9 +201,7 @@
 
             // Leitung Kamin - Puffer
             function leitung_kamin_puffer() {
-                var dt = temp_kamin - temp_puffer3;
-                if (temp_kamin > tmin_kamin && dt >= dt_kamin_puffer)
-                {
+                if (pumpe_kamin && temp_kamin > tmin_kamin) {
                     if (++lo_kamin > 19) lo_kamin = 0;
                 }
                 else {
@@ -233,7 +242,6 @@
             // Leitung Kessel - Heizung
             function leitung_kessel_heizung() {
                 if (++lo_heizkreis > 19) lo_heizkreis = 0;
-                var rla_aktiv = (temp_puffer2 - temp_heiz_rl) > 0;
                 var color = calc_tcolor(temp_heiz_vl);
                 ctx.strokeStyle = color; //"#ff0000";
                 ctx.lineCap = "butt";
@@ -275,7 +283,6 @@
 
             // Leitung Rücklaufanhebung Heizungsrücklauf
             function leitung_rla_heizung() {
-                var rla_aktiv = (temp_puffer2 - temp_heiz_rl) > 0;
                 if (rla_aktiv == true) {
                     if (++lo_rla_heizkreis > 19) lo_rla_heizkreis = 0;
                 }
@@ -312,12 +319,19 @@
 
             // Puffer aufheizen durch Kessel für Warmwasser
             function leitung_kessel_ww() {
+                if (pumpe_heiz_ww) {
+                    if (++lo_nachheiz_ww > 19) lo_nachheiz_ww = 0;
+                }
+                else {
+                    lo_nachheiz_ww = 0;
+                }
+
                 var color = calc_tcolor(temp_heiz_vl);
                 ctx.strokeStyle = color; //"#ff0000";
                 ctx.lineCap = "butt";
                 ctx.lineWidth = 6;
                 ctx.lineJoin = "round";
-                ctx.lineDashOffset = 0; //-lo_kamin;
+                ctx.lineDashOffset = -lo_nachheiz_ww;
                 ctx.setLineDash([15,5]);
                 ctx.beginPath();
                 ctx.moveTo(brenner_x - 50,      puffer_y + 20);
@@ -350,12 +364,18 @@
                     //temp_kamin = req.responseText;
                     var arr = req.responseText.split(",");
                     if (arr.length >= 6) {
-                        temp_kamin   = parseInt(arr[0], 10);
-                        temp_puffer1 = parseInt(arr[1], 10);
-                        temp_puffer2 = parseInt(arr[2], 10);
-                        temp_puffer3 = parseInt(arr[3], 10);
-                        temp_heiz_vl = parseInt(arr[4], 10);
-                        temp_heiz_rl = parseInt(arr[5], 10);
+                        temp_kamin      = parseInt(arr[0], 10);
+                        temp_kollektor  = parseInt(arr[1], 10);
+                        temp_puffer1    = parseInt(arr[2], 10);
+                        temp_puffer2    = parseInt(arr[3], 10);
+                        temp_puffer3    = parseInt(arr[4], 10);
+                        temp_puffer4    = parseInt(arr[5], 10);
+                        temp_heiz_vl    = parseInt(arr[6], 10);
+                        temp_heiz_rl    = parseInt(arr[7], 10);
+                        pumpe_kamin     = parseInt(arr[8], 10);
+                        pumpe_solar     = parseInt(arr[9], 10);
+                        pumpe_heiz_ww   = parseInt(arr[10], 10);
+                        rla_aktiv       = parseInt(arr[11], 10);
 
                         document.getElementById('t_kamin').innerText = temp_kamin;
                         document.getElementById('t_puffer1').innerText = temp_puffer1;
