@@ -25,7 +25,7 @@
 </head>
 
 <body onload="init();">
-    <h1>Heizungsanlage Monitor</h1>
+    <h1>SGW3 Heizungsanlage Monitor</h1>
     <canvas id="canv1" width="640" height="400" style="border:1px solid #68471d; background-color:#ccdbdd">
     </canvas>
 
@@ -95,8 +95,9 @@
                 ctx.fillText("Kamin", kamin_x, kamin_y - 5);
                 ctx.fillText("Puffer", puffer_x + 10, puffer_y - 5);
                 ctx.fillText("Brenner", brenner_x, brenner_y - 5);
-
-                ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
+                ctx.fillText("Solar", kollektor_x-10, kollektor_y - 60);
+                ctx.fillText(temp_kamin, kollektor_x + 90, kollektor_y - 60);
+                ctx.fillText(temp_kollektor, kamin_x + kamin_w + 10, kamin_y + 10);
                 ctx.fillText(temp_puffer1, puffer_x - 30, puffer_y + 15);
                 ctx.fillText(temp_puffer2, puffer_x - 30, puffer_y + 70);
                 ctx.fillText(temp_puffer3, puffer_x - 30, puffer_y + 130);
@@ -140,7 +141,7 @@
 
             function draw_kessel() {
                 // Öl-Brenner
-                ctx.fillStyle = "#aa0000";
+                ctx.fillStyle = "#aa8844";
                 ctx.beginPath();
                 ctx.moveTo(brenner_x, brenner_y);
                 ctx.lineTo(brenner_x + brenner_w - 30, brenner_y);
@@ -170,7 +171,7 @@
             }
 
             function draw_kollektor() {
-                ctx.strokeStyle = "#111111";
+                ctx.strokeStyle = "#110066";
                 ctx.lineCap = "round";
                 ctx.lineWidth = 15;
                 ctx.lineDashOffset = 0;
@@ -457,10 +458,9 @@
     </script>
 
     <div id="main">
-        <h2>Messwerte der Sensoren:</h2>
         <table style="border:1px solid #68471d; background-color:#ccdbdd">
             <thead>
-                <tr><th>Beschreibung</th><th>Messung</th></tr>
+                <tr><th>Position</th><th>Messwert</th></tr>
             </thead>
             <tbody>
                 <tr><td>Temperatur Kaminofen</td><td id="t_kamin"></td></tr>
