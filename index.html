@@ -96,8 +96,8 @@
                 ctx.fillText("Puffer", puffer_x + 10, puffer_y - 5);
                 ctx.fillText("Brenner", brenner_x, brenner_y - 5);
                 ctx.fillText("Solar", kollektor_x-10, kollektor_y - 60);
-                ctx.fillText(temp_kamin, kollektor_x + 90, kollektor_y - 60);
-                ctx.fillText(temp_kollektor, kamin_x + kamin_w + 10, kamin_y + 10);
+                ctx.fillText(temp_kamin, kamin_x + kamin_w + 10, kamin_y + 10);
+                ctx.fillText(temp_kollektor, kollektor_x + 90, kollektor_y - 60);
                 ctx.fillText(temp_puffer1, puffer_x - 30, puffer_y + 15);
                 ctx.fillText(temp_puffer2, puffer_x - 30, puffer_y + 70);
                 ctx.fillText(temp_puffer3, puffer_x - 30, puffer_y + 130);
@@ -383,7 +383,8 @@
                 ctx.lineTo(kollektor_x, kollektor_y);
                 ctx.stroke();
 
-                ctx.strokeStyle = calc_tcolor(temp_kollektor);
+                color = calc_tcolor(temp_kollektor);
+                ctx.strokeStyle = color; //"#00FF00";
                 ctx.beginPath();
                 ctx.moveTo(kollektor_x + kollektor_w, kollektor_y - kollektor_h);
                 ctx.lineTo(kollektor_x + kollektor_w, kollektor_y + 20);
