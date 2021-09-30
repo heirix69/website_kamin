@@ -31,6 +31,8 @@
 
     <script type="text/javascript">
 
+        // Overall device status
+        var device_status = 0;
         // Temperatures
         var temp_kamin      = 0; //"--";
         var temp_kollektor  = 0; //"--";
@@ -104,6 +106,17 @@
                 ctx.fillText(temp_puffer4, puffer_x - 30, puffer_y + 185);
                 ctx.fillText(temp_heiz_vl, brenner_x - 30, brenner_y + 10);
                 ctx.fillText(temp_heiz_rl, brenner_x - 30, brenner_y + brenner_h + 45);
+                ctx.font = "20px Arial";
+                ctx.fillText(" Anlagenstatus: ", 220, 30);
+                ctx.lineWidth = 2;
+                if (device_status) {
+                    ctx.strokeStyle = "#DD0000";
+                    ctx.strokeText("[ERROR]", 250, 55);
+                }
+                else {
+                    ctx.strokeStyle = "#00AA00";
+                    ctx.strokeText("[OK]", 270, 55);
+                }
             }
 
             function draw_kamin() {
@@ -418,23 +431,24 @@
             console.log("Grabbing Value");
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200) {
-                    document.getElementById('temperatur1').innerText = req.responseText;
-                    //temp_kamin = req.responseText;
+                    document.getElementById('id_response_text').innerText = req.responseText;
                     var arr = req.responseText.split(",");
                     if (arr.length >= 6) {
-                        temp_kamin      = parseInt(arr[0], 10);
-                        temp_kollektor  = parseInt(arr[1], 10);
-                        temp_puffer1    = parseInt(arr[2], 10);
-                        temp_puffer2    = parseInt(arr[3], 10);
-                        temp_puffer3    = parseInt(arr[4], 10);
-                        temp_puffer4    = parseInt(arr[5], 10);
-                        temp_heiz_vl    = parseInt(arr[6], 10);
-                        temp_heiz_rl    = parseInt(arr[7], 10);
-                        pumpe_kamin     = parseInt(arr[8], 10);
-                        pumpe_solar     = parseInt(arr[9], 10);
-                        pumpe_heiz_ww   = parseInt(arr[10], 10);
-                        rla_aktiv       = parseInt(arr[11], 10);
+                        device_status   = parseInt(arr[0], 10);
+                        temp_kamin      = parseInt(arr[1], 10);
+                        temp_kollektor  = parseInt(arr[2], 10);
+                        temp_puffer1    = parseInt(arr[3], 10);
+                        temp_puffer2    = parseInt(arr[4], 10);
+                        temp_puffer3    = parseInt(arr[5], 10);
+                        temp_puffer4    = parseInt(arr[6], 10);
+                        temp_heiz_vl    = parseInt(arr[7], 10);
+                        temp_heiz_rl    = parseInt(arr[8], 10);
+                        pumpe_kamin     = parseInt(arr[9], 10);
+                        pumpe_solar     = parseInt(arr[10], 10);
+                        pumpe_heiz_ww   = parseInt(arr[11], 10);
+                        rla_aktiv       = parseInt(arr[12], 10);
 
+                        document.getElementById('id_device_status').innerText = device_status;
                         document.getElementById('t_kamin').innerText = temp_kamin;
                         document.getElementById('t_kollektor').innerText = temp_kollektor;
                         document.getElementById('t_puffer1').innerText = temp_puffer1;
@@ -472,11 +486,12 @@
                 <tr><td>Temperatur Puffer Unten</td><td id="t_puffer4"></td></tr>
                 <tr><td>Temperatur Heizkreis Vorlauf</td><td id="t_heiz_vl"></td></tr>
                 <tr><td>Temperatur Heizkreis Rücklauf</td><td id="t_heiz_rl"></td></tr>
+                <tr><td>Device Status</td><td id="id_device_status"></td></tr>
             </tbody>
         </table>
         <div id="updateMe">
             <h2>reload.txt:</h2>
-            <h1 id="temperatur1"></h1>
+            <h1 id="id_response_text"></h1>
         </div>
     </div>
 </body>
