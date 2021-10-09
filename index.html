@@ -33,6 +33,7 @@
 
         // Overall device status
         var device_status = 0;
+        var esp_runtime = 0;
         // Temperatures
         var temp_kamin      = 0; //"--";
         var temp_kollektor  = 0; //"--";
@@ -45,7 +46,7 @@
 
         // Pumpenstatus
         var pumpe_kamin = 0;        // Laddomat
-        var pumpe_solar = 0;        // 
+        var pumpe_solar = 0;        //
         var pumpe_heiz_ww = 0;
 
         // Status Rücklaufanhebung Heizung
@@ -431,9 +432,9 @@
             console.log("Grabbing Value");
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200) {
-                    document.getElementById('id_response_text').innerText = req.responseText;
+                    //document.getElementById('id_response_text').innerText = req.responseText;
                     var arr = req.responseText.split(",");
-                    if (arr.length >= 6) {
+                    if (arr.length >= 14) {
                         device_status   = parseInt(arr[0], 10);
                         temp_kamin      = parseInt(arr[1], 10);
                         temp_kollektor  = parseInt(arr[2], 10);
@@ -447,16 +448,21 @@
                         pumpe_solar     = parseInt(arr[10], 10);
                         pumpe_heiz_ww   = parseInt(arr[11], 10);
                         rla_aktiv       = parseInt(arr[12], 10);
+                        esp_runtime     = arr[13];  // time string
 
+                        document.getElementById('id_t_kamin').innerText = temp_kamin;
+                        document.getElementById('id_t_kollektor').innerText = temp_kollektor;
+                        document.getElementById('id_t_puffer1').innerText = temp_puffer1;
+                        document.getElementById('id_t_puffer2').innerText = temp_puffer2;
+                        document.getElementById('id_t_puffer3').innerText = temp_puffer3;
+                        document.getElementById('id_t_puffer4').innerText = temp_puffer4;
+                        document.getElementById('id_t_heiz_vl').innerText = temp_heiz_vl;
+                        document.getElementById('id_t_heiz_rl').innerText = temp_heiz_rl;
+                        document.getElementById('id_pumpe_solar').innerText = pumpe_solar;
+                        document.getElementById('id_pumpe_kamin').innerText = pumpe_kamin;
+                        document.getElementById('id_rla_aktiv').innerText = rla_aktiv;
                         document.getElementById('id_device_status').innerText = device_status;
-                        document.getElementById('t_kamin').innerText = temp_kamin;
-                        document.getElementById('t_kollektor').innerText = temp_kollektor;
-                        document.getElementById('t_puffer1').innerText = temp_puffer1;
-                        document.getElementById('t_puffer2').innerText = temp_puffer2;
-                        document.getElementById('t_puffer3').innerText = temp_puffer3;
-                        document.getElementById('t_puffer4').innerText = temp_puffer4;
-                        document.getElementById('t_heiz_vl').innerText = temp_heiz_vl;
-                        document.getElementById('t_heiz_rl').innerText = temp_heiz_rl;
+                        document.getElementById('id_esp_runtime').innerText = esp_runtime;
                     }
                 }
             }
@@ -475,23 +481,20 @@
     <div id="main">
         <table style="border:1px solid #68471d; background-color:#ccdbdd">
             <thead>
-                <tr><th>Position</th><th>Messwert</th></tr>
+                <tr><th>Beschreibung</th><th>Messwert</th><th>Beschreibung</th><th>Messwert</th></tr>
             </thead>
             <tbody>
-                <tr><td>Temperatur Kaminofen</td><td id="t_kamin"></td></tr>
-                <tr><td>Temperatur Kollektor</td><td id="t_kollektor"></td></tr>
-                <tr><td>Temperatur Puffer Oben</td><td id="t_puffer1"></td></tr>
-                <tr><td>Temperatur Puffer RLA</td><td id="t_puffer2"></td></tr>
-                <tr><td>Temperatur Puffer Solar</td><td id="t_puffer3"></td></tr>
-                <tr><td>Temperatur Puffer Unten</td><td id="t_puffer4"></td></tr>
-                <tr><td>Temperatur Heizkreis Vorlauf</td><td id="t_heiz_vl"></td></tr>
-                <tr><td>Temperatur Heizkreis Rücklauf</td><td id="t_heiz_rl"></td></tr>
-                <tr><td>Device Status</td><td id="id_device_status"></td></tr>
+                <tr><td>Temperatur Puffer 1 (oben)</td><td id="id_t_puffer1"></td>  <td>Temperatur Kaminofen</td><td id="id_t_kamin"></td></tr>
+                <tr><td>Temperatur Puffer 2 (RLA)</td><td id="id_t_puffer2"></td>   <td>Temperatur Kollektor</td><td id="id_t_kollektor"></td></tr>
+                <tr><td>Temperatur Puffer 3 (Solar)</td><td id="id_t_puffer3"></td> <td>Temperatur Heizung Vorlauf</td><td id="id_t_heiz_vl"></td></tr>
+                <tr><td>Temperatur Puffer 4 (unten)</td><td id="id_t_puffer4"></td> <td>Temperatur Heizung Rücklauf</td><td id="id_t_heiz_rl"></td></tr>
+                <tr><td>Pumpe Kamin (%)</td><td id="id_pumpe_kamin"></td>           <td>Rücklaufanhebung aktiv</td><td id="id_rla_aktiv"></td></tr>
+                <tr><td>Pumpe Solar (%)</td><td id="id_pumpe_solar"></td>           <td>DeltaSol Status (0=OK)</td><td id="id_device_status"></td></tr>
             </tbody>
         </table>
-        <div id="updateMe">
-            <h2>reload.txt:</h2>
-            <h1 id="id_response_text"></h1>
+        <div id="runtime">
+            <h2>Server runtime in ddd:hh:mm:ss</h2>
+            <h1 id="id_esp_runtime"></h1>
         </div>
     </div>
 </body>
