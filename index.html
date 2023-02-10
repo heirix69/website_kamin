@@ -9,6 +9,8 @@
     <style>
         h1 {
             color: rgb(36, 11, 146);
+            font-size: 36px;
+            font-family: verdana;
         }
         table,
         th,
@@ -21,6 +23,23 @@
         td {
             padding: .5em;
         }
+
+        .toggle-buttons input[type="radio"] {
+            visibility: hidden;
+        }
+        .toggle-buttons label {
+            border: 2px solid #333;
+            border-radius: 0.5em;
+            padding: 0.5em;
+            font-size: 32px;
+            font-family: verdana;
+        }
+        .toggle-buttons input:checked + label {
+            background: #054e07;
+            color: #ffffff;
+            box-shadow: none;
+        }
+
     </style>
 </head>
 
@@ -33,7 +52,7 @@
 
         // Overall device status
         var device_status = 0;
-        var esp_runtime = 0;
+        var esp_uptime = 0;
         // Temperatures
         var temp_kamin      = 0; //"--";
         var temp_kollektor  = 0; //"--";
@@ -50,7 +69,9 @@
         var pumpe_heiz_ww = 0;
 
         // Status Rücklaufanhebung Heizung
-        var rla_aktiv = 0;   // 1 = aktiv / 0 = inaktiv
+        var rla_aktiv = 0;      // Rücklaufanhebung 1 = aktiv / 0 = inaktiv
+        var heizstab_aktiv = 0; // Heizstab         1 = on    / 0 = off
+        var heizstab_modus = 0; // Heizstab Modus 0=off, 1=on, 2=auto
 
         // Positions
         const kamin_x = 40;
@@ -108,15 +129,33 @@
                 ctx.fillText(temp_heiz_vl, brenner_x - 30, brenner_y + 10);
                 ctx.fillText(temp_heiz_rl, brenner_x - 30, brenner_y + brenner_h + 45);
                 ctx.font = "20px Arial";
-                ctx.fillText(" Anlagenstatus: ", 220, 30);
+                ctx.fillText("DeltaSol:", 220, 30);
                 ctx.lineWidth = 2;
                 if (device_status) {
                     ctx.strokeStyle = "#DD0000";
-                    ctx.strokeText("[ERROR]", 250, 55);
+                    ctx.strokeText("ERROR", 310, 30);
                 }
                 else {
                     ctx.strokeStyle = "#00AA00";
-                    ctx.strokeText("[OK]", 270, 55);
+                    ctx.strokeText("OK", 310, 30);
+                }
+                ctx.fillText("RLA:", 220, 60);
+                if (rla_aktiv) {
+                    ctx.strokeStyle = "#00AA00";
+                    ctx.strokeText("ON", 310, 60);
+                }
+                else {
+                    ctx.strokeStyle = "#666666";
+                    ctx.strokeText("OFF", 310, 60);
+                }
+                ctx.fillText("Heizstab:", 220, 90);
+                if (heizstab_aktiv) {
+                    ctx.strokeStyle = "#00AA00";
+                    ctx.strokeText("ON", 310, 90);
+                }
+                else {
+                    ctx.strokeStyle = "#666666";
+                    ctx.strokeText("OFF", 310, 90);
                 }
             }
 
@@ -151,6 +190,22 @@
                 // Fill with gradient
                 ctx.fillStyle = grd;
                 ctx.fillRect(puffer_x, puffer_y, puffer_w, puffer_h);
+            }
+
+            function draw_heizstab() {
+                if (heizstab_aktiv == 1) {
+                    ctx.strokeStyle = "#FF0000";
+                    ctx.lineDashOffset = -lo_heizkreis;
+                    ctx.setLineDash([12,12]);
+                } else {
+                    ctx.strokeStyle = "#110066";
+                }
+                ctx.lineCap = "round";
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(puffer_x + puffer_w + 5, puffer_y + 80);
+                ctx.lineTo(puffer_x + puffer_w - 30, puffer_y + 80);
+                ctx.stroke();
             }
 
             function draw_kessel() {
@@ -196,7 +251,7 @@
                 ctx.stroke();
             }
 
-            function draw_pumpe( x, y ) {
+            function draw_pumpe( x, y, n ) {
                 var r = 11;
                 ctx.strokeStyle = "#000000";
                 ctx.fillStyle = "#aaaaaa";
@@ -210,6 +265,10 @@
                 ctx.lineTo(x + 5, y + r);
                 ctx.closePath();
                 ctx.stroke();
+
+                ctx.font = "14px Arial";
+                ctx.fillStyle = "#000000";
+                ctx.fillText(n, x + 10, y + 17);
             }
 
             function draw_3wege_ventil( x, y ) {
@@ -269,7 +328,7 @@
                 ctx.moveTo(kamin_x + kamin_w + 50, kamin_y + kamin_h - 20);
                 ctx.lineTo(kamin_x + kamin_w + 50, kamin_y + 20);
                 ctx.stroke();
-                draw_pumpe(kamin_x + kamin_w + 20, kamin_y + kamin_h - 20);
+                draw_pumpe(kamin_x + kamin_w + 20, kamin_y + kamin_h - 20, pumpe_kamin);
                 draw_3wege_ventil(kamin_x + kamin_w + 50, kamin_y + kamin_h - 20);
             }
 
@@ -312,7 +371,7 @@
                 }
                 ctx.stroke();
 
-                draw_pumpe(brenner_x - 50, brenner_y - 50);
+                draw_pumpe(brenner_x - 50, brenner_y - 50, 70);
             }
 
             // Leitung Rücklaufanhebung Heizungsrücklauf
@@ -371,7 +430,7 @@
                 ctx.moveTo(brenner_x - 50,      puffer_y + 20);
                 ctx.lineTo(puffer_x + puffer_w, puffer_y + 20);
                 ctx.stroke();
-                draw_pumpe(puffer_x + puffer_w + 50, puffer_y + 20);
+                draw_pumpe(puffer_x + puffer_w + 50, puffer_y + 20, pumpe_heiz_ww);
             }
 
             function leitung_solar() {
@@ -407,7 +466,7 @@
                 ctx.lineTo(puffer_x + 30, puffer_y + puffer_h + 30);
                 ctx.lineTo(puffer_x + 30, puffer_y + puffer_h - 65);
                 ctx.stroke();
-                draw_pumpe( puffer_x - 40, puffer_y + puffer_h + 40);
+                draw_pumpe(puffer_x - 40, puffer_y + puffer_h + 40, pumpe_solar);
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -423,18 +482,19 @@
             draw_heizung();
             draw_text();
             leitung_solar();
+            draw_heizstab();
 
             setTimeout(draw, 80);  // redraw for animation every 100 ms
         }
 
         function refresh() {
             var req = new XMLHttpRequest();
-            console.log("Grabbing Value");
+            console.log("Reload values");
             req.onreadystatechange = function() {
                 if (req.readyState == 4 && req.status == 200) {
                     //document.getElementById('id_response_text').innerText = req.responseText;
                     var arr = req.responseText.split(",");
-                    if (arr.length >= 14) {
+                    if (arr.length >= 16) {
                         device_status   = parseInt(arr[0], 10);
                         temp_kamin      = parseInt(arr[1], 10);
                         temp_kollektor  = parseInt(arr[2], 10);
@@ -448,21 +508,32 @@
                         pumpe_solar     = parseInt(arr[10], 10);
                         pumpe_heiz_ww   = parseInt(arr[11], 10);
                         rla_aktiv       = parseInt(arr[12], 10);
-                        esp_runtime     = arr[13];  // time string
+                        heizstab_aktiv  = parseInt(arr[13], 10);
+                        heizstab_modus  = parseInt(arr[14], 10);
+                        esp_uptime     = arr[15];  // time string
 
-                        document.getElementById('id_t_kamin').innerText = temp_kamin;
-                        document.getElementById('id_t_kollektor').innerText = temp_kollektor;
-                        document.getElementById('id_t_puffer1').innerText = temp_puffer1;
-                        document.getElementById('id_t_puffer2').innerText = temp_puffer2;
-                        document.getElementById('id_t_puffer3').innerText = temp_puffer3;
-                        document.getElementById('id_t_puffer4').innerText = temp_puffer4;
-                        document.getElementById('id_t_heiz_vl').innerText = temp_heiz_vl;
-                        document.getElementById('id_t_heiz_rl').innerText = temp_heiz_rl;
-                        document.getElementById('id_pumpe_solar').innerText = pumpe_solar;
-                        document.getElementById('id_pumpe_kamin').innerText = pumpe_kamin;
-                        document.getElementById('id_rla_aktiv').innerText = rla_aktiv;
-                        document.getElementById('id_device_status').innerText = device_status;
-                        document.getElementById('id_esp_runtime').innerText = esp_runtime;
+                        // document.getElementById('id_t_kamin').innerText = temp_kamin;
+                        // document.getElementById('id_t_kollektor').innerText = temp_kollektor;
+                        // document.getElementById('id_t_puffer1').innerText = temp_puffer1;
+                        // document.getElementById('id_t_puffer2').innerText = temp_puffer2;
+                        // document.getElementById('id_t_puffer3').innerText = temp_puffer3;
+                        // document.getElementById('id_t_puffer4').innerText = temp_puffer4;
+                        // document.getElementById('id_t_heiz_vl').innerText = temp_heiz_vl;
+                        // document.getElementById('id_t_heiz_rl').innerText = temp_heiz_rl;
+                        // document.getElementById('id_pumpe_solar').innerText = pumpe_solar;
+                        // document.getElementById('id_pumpe_kamin').innerText = pumpe_kamin;
+                        // document.getElementById('id_rla_aktiv').innerText = rla_aktiv;
+                        // document.getElementById('id_device_status').innerText = device_status;
+                        document.getElementById('id_esp_uptime').innerText = esp_uptime;
+
+                        const modeButton0 = document.getElementById('mode_off');
+                        const modeButton1 = document.getElementById('mode_on');
+                        const modeButton2 = document.getElementById('mode_auto');
+                        switch (heizstab_modus) {
+                            case 0: modeButton0.checked = true; break;
+                            case 1: modeButton1.checked = true; break;
+                            case 2: modeButton2.checked = true; break;
+                        }
                     }
                 }
             }
@@ -476,25 +547,35 @@
             refresh();   // Run the refresh function for the first time.
             setInterval(refresh, 10000);  // interval to reload values in ms.
         }
+
+        function toggle_heizstab(mode)
+        {
+            var req = new XMLHttpRequest();
+            console.log("send_req_toggle_heizstab: " + mode);
+            req.onreadystatechange = function() {
+                if (req.readyState == 4 && req.status == 200) {
+                    console.log("toggle_heizstab response: " + req.responseText);
+                }
+            }
+            switch(mode) {
+                case 0:  req.open("GET", 'heizstab_off', true); break;
+                case 1:  req.open("GET", 'heizstab_on', true); break;
+                case 2:  req.open("GET", 'heizstab_auto', true); break;
+            }
+            req.send(null);
+        }
     </script>
 
     <div id="main">
-        <table style="border:1px solid #68471d; background-color:#ccdbdd">
-            <thead>
-                <tr><th>Beschreibung</th><th>Messwert</th><th>Beschreibung</th><th>Messwert</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>Temperatur Puffer 1 (oben)</td><td id="id_t_puffer1"></td>  <td>Temperatur Kaminofen</td><td id="id_t_kamin"></td></tr>
-                <tr><td>Temperatur Puffer 2 (RLA)</td><td id="id_t_puffer2"></td>   <td>Temperatur Kollektor</td><td id="id_t_kollektor"></td></tr>
-                <tr><td>Temperatur Puffer 3 (Solar)</td><td id="id_t_puffer3"></td> <td>Temperatur Heizung Vorlauf</td><td id="id_t_heiz_vl"></td></tr>
-                <tr><td>Temperatur Puffer 4 (unten)</td><td id="id_t_puffer4"></td> <td>Temperatur Heizung Rücklauf</td><td id="id_t_heiz_rl"></td></tr>
-                <tr><td>Pumpe Kamin (%)</td><td id="id_pumpe_kamin"></td>           <td>Rücklaufanhebung aktiv</td><td id="id_rla_aktiv"></td></tr>
-                <tr><td>Pumpe Solar (%)</td><td id="id_pumpe_solar"></td>           <td>DeltaSol Status (0=OK)</td><td id="id_device_status"></td></tr>
-            </tbody>
-        </table>
-        <div id="runtime">
-            <h2>Server runtime in ddd:hh:mm:ss</h2>
-            <h1 id="id_esp_runtime"></h1>
+        <p style="font-size:24px;font-family:verdana;">Uptime [ddd:hh:mm:ss] = <span id="id_esp_uptime"></span></p>
+        <p style="font-size:24px;font-family:verdana">PV-Überschuss für den Heizstab verwenden:</p>
+        <div class="toggle-buttons">
+            <input type="radio" id="mode_off" name="group_heizstab" onchange="toggle_heizstab(0)"/>
+            <label for="mode_off">OFF</label>
+            <input type="radio" id="mode_on" name="group_heizstab" onchange="toggle_heizstab(1)"/>
+            <label for="mode_on">ON</label>
+            <input type="radio" id="mode_auto" name="group_heizstab" onchange="toggle_heizstab(2)"/>
+            <label for="mode_auto">Auto</label>
         </div>
     </div>
 </body>
