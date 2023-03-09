@@ -31,8 +31,9 @@
             border: 2px solid #333;
             border-radius: 0.5em;
             padding: 0.5em;
-            font-size: 32px;
+            font-size: 28px;
             font-family: verdana;
+            background: #e6e6e6;
         }
         .toggle-buttons input:checked + label {
             background: #054e07;
@@ -70,6 +71,7 @@
 
         // Status Rücklaufanhebung Heizung
         var rla_aktiv = 0;      // Rücklaufanhebung 1 = aktiv / 0 = inaktiv
+        var rla_modus = 0;      // RLA Modus 0=off, 1=on, 2=auto
         var heizstab_aktiv = 0; // Heizstab         1 = on    / 0 = off
         var heizstab_modus = 0; // Heizstab Modus 0=off, 1=on, 2=auto
 
@@ -494,7 +496,7 @@
                 if (req.readyState == 4 && req.status == 200) {
                     //document.getElementById('id_response_text').innerText = req.responseText;
                     var arr = req.responseText.split(",");
-                    if (arr.length >= 16) {
+                    if (arr.length >= 17) {
                         device_status   = parseInt(arr[0], 10);
                         temp_kamin      = parseInt(arr[1], 10);
                         temp_kollektor  = parseInt(arr[2], 10);
@@ -508,9 +510,10 @@
                         pumpe_solar     = parseInt(arr[10], 10);
                         pumpe_heiz_ww   = parseInt(arr[11], 10);
                         rla_aktiv       = parseInt(arr[12], 10);
-                        heizstab_aktiv  = parseInt(arr[13], 10);
-                        heizstab_modus  = parseInt(arr[14], 10);
-                        esp_uptime     = arr[15];  // time string
+                        rla_modus       = parseInt(arr[13], 10);
+                        heizstab_aktiv  = parseInt(arr[14], 10);
+                        heizstab_modus  = parseInt(arr[15], 10);
+                        esp_uptime     = arr[16];  // time string
 
                         // document.getElementById('id_t_kamin').innerText = temp_kamin;
                         // document.getElementById('id_t_kollektor').innerText = temp_kollektor;
@@ -534,6 +537,15 @@
                             case 1: modeButton1.checked = true; break;
                             case 2: modeButton2.checked = true; break;
                         }
+
+                        const modeButtonRla0 = document.getElementById('mode_rla_off');
+                        const modeButtonRla1 = document.getElementById('mode_rla_on');
+                        const modeButtonRla2 = document.getElementById('mode_rla_auto');
+                        switch (rla_modus) {
+                            case 0: modeButtonRla0.checked = true; break;
+                            case 1: modeButtonRla1.checked = true; break;
+                            case 2: modeButtonRla2.checked = true; break;
+                        }
                     }
                 }
             }
@@ -545,7 +557,7 @@
         {
             draw();
             refresh();   // Run the refresh function for the first time.
-            setInterval(refresh, 10000);  // interval to reload values in ms.
+            setInterval(refresh, 8000);  // interval to reload values in ms.
         }
 
         function toggle_heizstab(mode)
@@ -558,9 +570,26 @@
                 }
             }
             switch(mode) {
-                case 0:  req.open("GET", 'heizstab_off', true); break;
-                case 1:  req.open("GET", 'heizstab_on', true); break;
-                case 2:  req.open("GET", 'heizstab_auto', true); break;
+                case 0:  req.open("GET", 'set_config?heizstab=0', true); break;
+                case 1:  req.open("GET", 'set_config?heizstab=1', true); break;
+                case 2:  req.open("GET", 'set_config?heizstab=2', true); break;
+            }
+            req.send(null);
+        }
+
+        function toggle_rla(mode)
+        {
+            var req = new XMLHttpRequest();
+            console.log("send_req_toggle_rla: " + mode);
+            req.onreadystatechange = function() {
+                if (req.readyState == 4 && req.status == 200) {
+                    console.log("toggle_rla response: " + req.responseText);
+                }
+            }
+            switch(mode) {
+                case 0:  req.open("GET", 'set_config?mode_rla=0', true); break;
+                case 1:  req.open("GET", 'set_config?mode_rla=1', true); break;
+                case 2:  req.open("GET", 'set_config?mode_rla=2', true); break;
             }
             req.send(null);
         }
@@ -568,12 +597,23 @@
 
     <div id="main">
         <p style="font-size:24px;font-family:verdana;">Uptime [ddd:hh:mm:ss] = <span id="id_esp_uptime"></span></p>
+
+        <p style="font-size:24px;font-family:verdana">Modus Rücklaufanhebung:</p>
+        <div class="toggle-buttons">
+            <input type="radio" id="mode_rla_off" name="group_rla" onchange="toggle_rla(0)"/>
+            <label for="mode_rla_off">Manual-OFF</label>
+            <input type="radio" id="mode_rla_on" name="group_rla" onchange="toggle_rla(1)"/>
+            <label for="mode_rla_on">Manual-ON</label>
+            <input type="radio" id="mode_rla_auto" name="group_rla" onchange="toggle_rla(2)"/>
+            <label for="mode_rla_auto">Auto</label>
+        </div>
+
         <p style="font-size:24px;font-family:verdana">PV-Überschuss für den Heizstab verwenden:</p>
         <div class="toggle-buttons">
             <input type="radio" id="mode_off" name="group_heizstab" onchange="toggle_heizstab(0)"/>
-            <label for="mode_off">OFF</label>
+            <label for="mode_off">Manual-OFF</label>
             <input type="radio" id="mode_on" name="group_heizstab" onchange="toggle_heizstab(1)"/>
-            <label for="mode_on">ON</label>
+            <label for="mode_on">Manual-ON</label>
             <input type="radio" id="mode_auto" name="group_heizstab" onchange="toggle_heizstab(2)"/>
             <label for="mode_auto">Auto</label>
         </div>
