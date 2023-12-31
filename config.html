@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="en-us" http-equiv="Content-Language" />
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <title>ESP-Config</title>
+    <style>
+        h1 {
+            color: rgb(36, 11, 146);
+            font-size: 36px;
+            font-family: verdana;
+            text-align: center;
+        }
+        table,
+        th,
+        td {
+            border: 1px solid;
+            border-collapse: separate;
+            margin-top: 2em;
+            text-align: center;
+        }
+        td {
+            padding: .5em;
+        }
+
+        .toggle-buttons input[type="radio"] {
+            visibility: hidden;
+        }
+        .toggle-buttons label {
+            border: 2px solid #333;
+            border-radius: 0.5em;
+            padding: 0.5em;
+            font-size: 28px;
+            font-family: verdana;
+            background: #e6e6e6;
+        }
+        .toggle-buttons input:checked + label {
+            background: #054e07;
+            color: #ffffff;
+            box-shadow: none;
+        }
+
+        form {
+            display: grid;
+            padding: 1em;
+            background: #306183;
+            border: 1px solid #c1c1c1;
+            margin: 2rem auto 0 auto;
+            max-width: 400px;
+            padding: 1em;
+        }
+
+        form input {
+            background: #fff;
+            border: 1px solid #9c9c9c;
+        }
+
+        form button {
+            background: rgb(50, 167, 18);
+            padding: 0.7em;
+            width: 100%;
+            border: 0;
+
+            label {
+                padding: 0.5em 0.5em 0.5em 0;
+            }
+
+            input {
+                padding: 0.7em;
+                margin-bottom: 0.5rem;
+            }
+
+            input:focus {
+                outline: 10px solid gold;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Configuration</h1>
+    <p>Network settings:</p>
+    <form action="/set_config" method="post" target="_self">
+      <label for="wifi_ssid">WIFI SSID:</label>
+      <input type="text" id="wifi_ssid" name="wifi_ssid"><br><br>
+      <label for="wifi_pwd">WIFI password:</label>
+      <input type="text" id="wifi_pwd" name="wifi_pwd"><br><br>
+      <input type="submit" value="Submit">
+    </form>
+
+</body>
+</html>
