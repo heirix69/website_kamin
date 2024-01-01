@@ -13,6 +13,11 @@
             font-family: verdana;
             text-align: center;
         }
+        p {
+            font-size: 14px;
+            font-family: verdana;
+            text-align: center;
+        }
         table,
         th,
         td {
@@ -45,7 +50,7 @@
         form {
             display: grid;
             padding: 1em;
-            background: #306183;
+            background: #4680a9;
             border: 1px solid #c1c1c1;
             margin: 2rem auto 0 auto;
             max-width: 400px;
@@ -58,7 +63,7 @@
         }
 
         form button {
-            background: rgb(50, 167, 18);
+            background: rgb(199, 215, 54);
             padding: 0.7em;
             width: 100%;
             border: 0;
@@ -80,15 +85,29 @@
 </head>
 
 <body>
+    <script type="text/javascript">
+        function update_config()
+        {
+            var req = new XMLHttpRequest();
+            console.log("send config");
+            req.onreadystatechange = function() {
+                if (req.readyState == 4 && req.status == 200) {
+                    console.log("update_config response: " + req.responseText);
+                }
+            }
+            req.open("POST", 'set_config?wfi_ssid=bla?wfi_pwd=blub', true);
+            req.send(null);
+        }
+    </script>
 
     <h1>Configuration</h1>
-    <p>Network settings:</p>
-    <form action="/set_config" method="post" target="_self">
-      <label for="wifi_ssid">WIFI SSID:</label>
-      <input type="text" id="wifi_ssid" name="wifi_ssid"><br><br>
-      <label for="wifi_pwd">WIFI password:</label>
-      <input type="text" id="wifi_pwd" name="wifi_pwd"><br><br>
-      <input type="submit" value="Submit">
+    <form action="/set_config" method="post" target="_blank">
+        <p>Network settings:</p>
+        <label for="wifi_ssid">WIFI SSID:</label>
+        <input type="text" id="wifi_ssid" name="wifi_ssid"><br><br>
+        <label for="wifi_pwd">WIFI password:</label>
+        <input type="text" id="wifi_pwd" name="wifi_pwd"><br><br>
+        <input type="submit" value="Submit">
     </form>
 
 </body>

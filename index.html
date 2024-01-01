@@ -570,9 +570,9 @@
                 }
             }
             switch(mode) {
-                case 0:  req.open("GET", 'set_config?heizstab=0', true); break;
-                case 1:  req.open("GET", 'set_config?heizstab=1', true); break;
-                case 2:  req.open("GET", 'set_config?heizstab=2', true); break;
+                case 0:  req.open("POST", 'set_config?heizstab=0', true); break;
+                case 1:  req.open("POST", 'set_config?heizstab=1', true); break;
+                case 2:  req.open("POST", 'set_config?heizstab=2', true); break;
             }
             req.send(null);
         }
@@ -587,9 +587,9 @@
                 }
             }
             switch(mode) {
-                case 0:  req.open("GET", 'set_config?mode_rla=0', true); break;
-                case 1:  req.open("GET", 'set_config?mode_rla=1', true); break;
-                case 2:  req.open("GET", 'set_config?mode_rla=2', true); break;
+                case 0:  req.open("POST", 'set_config?mode_rla=0', true); break;
+                case 1:  req.open("POST", 'set_config?mode_rla=1', true); break;
+                case 2:  req.open("POST", 'set_config?mode_rla=2', true); break;
             }
             req.send(null);
         }
